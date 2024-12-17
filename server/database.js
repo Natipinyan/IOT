@@ -2,10 +2,10 @@
 const mysql = require('mysql2');
 
 //require("./gen_params");
-let HOST     =require("./gen_params").HOST     ;
-let USER     =require("./gen_params").USER     ;
-let PASSWORD =require("./gen_params").PASSWORD ;
-let Database =require("./gen_params").DATABASE ;
+let HOST     =require(".env").HOST     ;
+let USER     =require(".env").USER     ;
+let PASSWORD =require(".env").PASSWORD ;
+let Database =require(".env").DATABASE ;
 console.log("database.HOST	=",HOST	);
 console.log("database.USER	=",USER	);
 console.log("database.PASSWORD=",PASSWORD);

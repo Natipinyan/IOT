@@ -14,6 +14,11 @@ app.use(express.json());
 app.listen(port, () => {
     console.log(`Now listening on port http://localhost:${port}`);
 });
+
+const espRouter = require('./routers/esp');
+app.use('/esp',espRouter);
+
+
 processDevices();
 function processDevices() {
     return new Promise((resolve, reject) => {

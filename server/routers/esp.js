@@ -1,9 +1,10 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
-router.get('/',(req,res)=>{
-    console.log('zion zona');
+router.get("/", (req, res) => {
+    const { temp, linght, moisture } = req.query;
 
-})
+    console.log("req.query");
+});
 
 module.exports = router;

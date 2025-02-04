@@ -1,26 +1,26 @@
-const express = require('express');
+const express = require("express");
+const morgan = require("morgan");
+const cors = require("cors");
+const dotenv = require("dotenv");
+
 const app = express();
-const morgan = require('morgan');
-const path = require("path");
-app.set("view engine","ejs");
-app.use(express.static(path.join(__dirname)));
-let db_M = require('./database');
-global.db_pool = db_M.pool;
+const HTTP_PORT = 3004;
 
+dotenv.config();
 
-const port = 6060;
 app.use(express.json());
-app.listen(port, () => {
-    console.log(`Now listening on port http://localhost:${port}`);
-    console.log(`Now listening on port http://localhost:${port}/esp`);
+app.use(cors());
+app.use(morgan("dev"));
 
+const esp = require("./routes/esp");
+app.use("/esp", esp);
+
+app.listen(HTTP_PORT, () => {
+    console.log(
+        `The server is running on port: ${HTTP_PORT} \nlink: http://localhost:${HTTP_PORT}`
+    );
 });
-
-const espRouter = require('./routers/esp');
-app.use('/esp',espRouter);
-
-
-processDevices();
+/*processDevices();
 function processDevices() {
     return new Promise((resolve, reject) => {
         const sql = `SELECT * FROM plants`;
@@ -35,4 +35,4 @@ function processDevices() {
             }
         });
     });
-}
+}*/

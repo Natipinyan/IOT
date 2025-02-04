@@ -2,28 +2,34 @@
 #include <WiFiClient.h>
 #include <HTTPClient.h>
 
-const char* ssid= "Kinneret College";
-const char* password= "";
+const char* ssid = "Kinneret College";
 
 WiFiClient client;
 
-void WiFi_SETUP() {
+void WiFi_SETUP(){
   WiFi.begin(ssid);
-  while(WiFi.status()!= WL_CONNECTED){
+  while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
   Serial.println("");
-  Serial.println("Wifi conected");
+  Serial.println("WiFi connected");
 }
 
-void sendData() {
+void sendData(float temp, int linght, int moisture){
   HTTPClient http;
-  http.begin(client,"http://10.9.0.106:6060/esp");
-  int httpCode = http.GET();
-  if(httpCode == HTTP_CODE_OK){
-    Serial.print("HTTP response code ");
-    Serial.print(httpCode);
-  }
-  http.end();
+  String dataUrl = "temp=" + String(temp);
+  dataUrl+= "&linght="+ String(linght);
+  dataUrl+= "&moisture="+ String(moisture);
+  http.begin(client, "http://10.9.0.106:6060/esp");
+    Serial.println(dataUrl);
+   int httpCode = http.GET();
+   if(httpCode == HTTP_CODE_OK) {
+     Serial.print("HTTP response code ");
+     Serial.println(httpCode);
+     //String Res = http.getString();
+     //Serial.println(Res);
+     //ret = Res.toInt();
+    }
+    http.end();
 }

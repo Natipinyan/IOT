@@ -1,110 +1,128 @@
-#include <DHT.h>
+#include <Arduino.h>
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+#include <ArduinoJson.h>
+// ייבוא ספריות
 
-#define dhtPin 16
-#define DHTTYPE DHT11
-DHT dht(dhtPin, DHTTYPE);
+#define TEMP_SENSOR_PIN A0
+#define MOISTURE_SENSOR_PIN A1
+#define PUMP_PIN D5
+//הגדרת פינים
 
-#define lightSensor 36
-#define MoistureSensor 39
+const char* ssid = "your_SSID";
+const char* password = "your_PASSWORD";
+const char* serverUrl = "http://your-server.com/getData";
+// משתנים גלובליים לרשת
 
-// משתני מצב
-enum PumpState { TEMP_CONTROL, MOISTURE_CONTROL, SHABBAT, MANUAL };
-PumpState currentState = MANUAL;
+WiFiClient client;
+HTTPClient http;
+// משתני רשת
+enum PumpMode { TEMP_MODE, SOIL_MOISTURE_MODE, SABBATH_MODE, MANUAL_MODE };
+PumpMode currentMode = TEMP_MODE;
+// הגדרת מצבי עבודה ואתחול למצב טמפרטורה
 
-// משתנים למצב טמפרטורה
-float desiredTemp = 25.0; // טמפרטורה רצויה
-int highTempDuration = 10; // זמן השקיה במעלות גבוהות (בדקות)
-int lowTempDuration = 5;   // זמן השקיה במעלות נמוכות (בדקות)
+struct Settings {
+    float desiredTemp;
+    int highTempDuration;
+    int lowTempDuration;
+    int desiredMoisture;
+    int shabbatStart;
+    int shabbatEnd;
+    int irrigationDuration;
+    bool manualCommand;
+};
+Settings settings;
+// קבלת הנתונים מהשרת
 
-// משתנים למצב לחות
-float desiredMoisture = 500; // ערך לחות רצויה
-float moistureTolerance = 50; // סבילות ±10%
-
-// משתנים למצב שבת
-int shabbatStartHour = 18;
-int shabbatStopHour = 22;
-
-// משתנה למצב ידני
-bool manualPumpOn = false;
-
-// משתנים כלליים
-unsigned long pumpStartTime = 0;
-bool isPumpRunning = false;
-
-// פונקציה להפעלת משאבה
-void controlPump(bool turnOn) {
-  if (turnOn) {
-    if (!isPumpRunning) {
-      Serial.println("Pump turned ON");
-      isPumpRunning = true;
-      pumpStartTime = millis();
+void fetchData() {
+    http.begin(client, serverUrl);
+    int httpCode = http.GET();
+    if (httpCode > 0) {
+        String payload = http.getString();
+        StaticJsonDocument<256> doc;
+        deserializeJson(doc, payload);
+        settings.desiredTemp = doc["desiredTemp"];
+        settings.highTempDuration = doc["highTempDuration"];
+        settings.lowTempDuration = doc["lowTempDuration"];
+        settings.desiredMoisture = doc["desiredMoisture"];
+        settings.shabbatStart = doc["shabbatStart"];
+        settings.shabbatEnd = doc["shabbatEnd"];
+        settings.irrigationDuration = doc["irrigationDuration"];
+        settings.manualCommand = doc["manualCommand"];
     }
-  } else {
-    if (isPumpRunning) {
-      Serial.println("Pump turned OFF");
-      isPumpRunning = false;
-    }
-  }
+    http.end();
 }
+//ייבוא הנתונים מהשרת
 
-// פונקציה לניהול מצבים
-void handleState(float temp, int moisture) {
-  switch (currentState) {
-    case TEMP_CONTROL: {
-      int duration = (temp > desiredTemp) ? highTempDuration : lowTempDuration;
-      if (millis() - pumpStartTime >= duration * 60000) {
-        controlPump(false);
-      } else {
-        controlPump(true);
-      }
-      break;
-    }
-    case MOISTURE_CONTROL:
-      if (moisture < desiredMoisture - moistureTolerance || moisture > desiredMoisture + moistureTolerance) {
-        controlPump(true);
-      } else {
-        controlPump(false);
-      }
-      break;
-    case SHABBAT: {
-      struct tm timeinfo;
-      if (getLocalTime(&timeinfo)) {
-        int hour = timeinfo.tm_hour;
-        if (hour >= shabbatStartHour && hour < shabbatStopHour) {
-          controlPump(true);
-        } else {
-          controlPump(false);
-        }
-      }
-      break;
-    }
-    case MANUAL:
-      if (manualPumpOn) {
-        controlPump(true);
-      } else {
-        controlPump(false);
-      }
-      break;
-  }
-}
 
 void setup() {
-  Serial.begin(115200);
-  WiFi_SETUP(); // פונקציה קיימת שלא משנים
-  dht.begin();
+    Serial.begin(115200);
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+    Serial.println("Connected to WiFi");
+    pinMode(PUMP_PIN, OUTPUT);
 }
+//הפעלת והגדרת התכנית
+
+void handleTempMode() {
+    int temp = analogRead(TEMP_SENSOR_PIN);
+    int wateringTime = (temp > settings.desiredTemp) ? settings.highTempDuration : settings.lowTempDuration;
+    digitalWrite(PUMP_PIN, HIGH);
+    delay(wateringTime * 60000);
+    digitalWrite(PUMP_PIN, LOW);
+}
+//מצב טמפרטורה
+
+void handleSoilMoistureMode() {
+    int moisture = analogRead(MOISTURE_SENSOR_PIN);
+    int lowerBound = settings.desiredMoisture - 10;
+    int upperBound = settings.desiredMoisture + 10;
+    if (moisture < lowerBound || moisture > upperBound) {
+        digitalWrite(PUMP_PIN, HIGH);
+        delay(60000);
+        digitalWrite(PUMP_PIN, LOW);
+    }
+}
+//מצב לחות קרקע
+
+void handleShabbatMode() {
+    int currentHour = hour(); // Assuming time is retrieved from an RTC module
+    if (currentHour >= settings.shabbatStart && currentHour < settings.shabbatEnd) {
+        digitalWrite(PUMP_PIN, HIGH);
+        delay(settings.irrigationDuration * 60000);
+        digitalWrite(PUMP_PIN, LOW);
+    }
+}
+//מצב שבת
+
+void handleManualMode() {
+    if (settings.manualCommand) {
+        delay(3000);
+        digitalWrite(PUMP_PIN, HIGH);
+        delay(settings.irrigationDuration * 60000);
+        digitalWrite(PUMP_PIN, LOW);
+    }
+}
+//מצב ידני
 
 void loop() {
-  // קריאת חיישנים
-  int light = analogRead(lightSensor);
-  int moisture = analogRead(MoistureSensor);
-  float temp = dht.readTemperature();
-
-  // שליחת נתונים לשרת
-  sendData(temp, light, moisture); // פונקציה קיימת שלא משנים
-
-  // ניהול מצב המשאבה
-  handleState(temp, moisture);
-
-  delay(500);
+    fetchData();
+    switch (currentMode) {
+        case TEMP_MODE:
+            handleTempMode();
+            break;
+        case SOIL_MOISTURE_MODE:
+            handleSoilMoistureMode();
+            break;
+        case SABBATH_MODE:
+            handleShabbatMode();
+            break;
+        case MANUAL_MODE:
+            handleManualMode();
+            break;
+    }
+    delay(60000);
 }

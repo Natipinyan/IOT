@@ -14,6 +14,3 @@ float ReadTemp() {
   return(temp);
 }
 
-void irrigation(int duration){
-
-}

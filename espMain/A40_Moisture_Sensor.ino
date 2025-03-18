@@ -1,5 +1,5 @@
 #define MOISTURE_SENSOR 39
 
-int HandleMoisture() {
+float HandleMoisture() {
   return analogRead(MOISTURE_SENSOR);
 }

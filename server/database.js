@@ -1,15 +1,14 @@
 const mysql = require('mysql2');
-require('dotenv').config();
 
-let HOST = process.env.HOST;
-let USER  = process.env.USER;
-let PASSWORD = process.env.PASSWORD;
-let Database = process.env.DATABASE;
+let HOST ="localhost";
+let USER ="root";
+let PASSWORD ="";
+let DATABASE ="iot";
 
 console.log("database.HOST	=",HOST	);
 console.log("database.USER	=",USER	);
 console.log("database.PASSWORD=",PASSWORD);
-console.log("database.Database=",Database);
+console.log("database.DATABASE=",DATABASE);
 
 
 
@@ -17,7 +16,7 @@ const pool = mysql.createPool({
     host:		HOST		,
     user:		USER		,
     password:	PASSWORD	,
-    database:	Database	,
+    database:	DATABASE	,
     waitForConnections: true,
     connectionLimit: 10,
     maxIdle: 10,

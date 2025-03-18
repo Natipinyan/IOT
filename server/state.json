@@ -1,0 +1,19 @@
+{
+  "state": 81,
+  "TEMP_MODE": {
+    "preferTemp": 25,
+    "minTime": 5,
+    "maxTime": 10
+  },
+  "MOISTURE_MODE": {
+    "moisture": 50
+  },
+  "SHABAT_MODE": {
+    "duration": 120,
+    "first": "00:00",
+    "second": "02:00"
+  },
+  "MANUAL_MODE": {
+    "command": "START"
+  }
+}

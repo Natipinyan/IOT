@@ -2,13 +2,16 @@
 #include <WiFiClient.h>
 #include <HTTPClient.h>
 
-const char* ssid = "Kinneret College";
+const char* ssid = "Nati";
 const char* password = "12345678";
+const char* ipAddres = "192.168.116.216";
+const char* port = "3000";
 
 WiFiClient client;
 
 void WiFi_SETUP(){
-  WiFi.begin(ssid, password);
+  Serial.begin(9600);
+  WiFi.begin(ssid,password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
@@ -17,29 +20,11 @@ void WiFi_SETUP(){
   Serial.println("WiFi connected");
 }
 
-void sendData(float temp, int light, int moisture){
-  HTTPClient http;
-  String dataUrl = "temp=" + String(temp);
-  dataUrl+= "&light="+ String(light);
-  dataUrl+= "&moisture="+ String(moisture);
-  http.begin(client, "http://192.168.1.83:3001/esp?" + dataUrl );
-    Serial.println(dataUrl);
-   int httpCode = http.GET();
-   if(httpCode == HTTP_CODE_OK) {
-     Serial.print("HTTP response code ");
-     Serial.println(httpCode);
-     //String Res = http.getString();
-     //Serial.println(Res);
-     //ret = Res.toInt();
-    }
-    http.end();
-}
 
-
-int GetState() {
-    int ret = -1;
+String GetState() {
+    String ret = "-1";
     HTTPClient http;
-    http.begin(client, "http://192.168.1.83:3001/esp/state");
+    http.begin(client, "http://" + String(ipAddres) + ":" + String(port) + "/esp/state");
     int httpCode = http.GET();
     Serial.println(httpCode);
     if (httpCode == HTTP_CODE_OK) {
@@ -47,16 +32,17 @@ int GetState() {
       Serial.println(httpCode);
       String Res = http.getString();
       Serial.println(Res);
-      ret = Res.toInt();
+      ret = Res;
     }
     http.end();
 
     return ret;
 }
-String getJsonData(String state){
+
+String getDataMode(String state){
   String json = "";
   HTTPClient http;
-  http.begin(client, "http://192.168.1.83:3001/esp/dataMode?state="+state);
+  http.begin(client, "http://" + String(ipAddres) + ":" + String(port) + "/esp/dataMode?state="+state);
   int httpCode = http.GET();
   Serial.println(httpCode);
   if (httpCode == HTTP_CODE_OK) {
@@ -65,6 +51,6 @@ String getJsonData(String state){
     json = http.getString();
   }
     http.end();
-
+        
     return json;
 }

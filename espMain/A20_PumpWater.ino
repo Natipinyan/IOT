@@ -2,7 +2,7 @@
 bool isStart;
 unsigned long irrigationTimeStart;
 
-void waterPumpSetup(){
+void waterPumpSetup() {
   pinMode(WATER_PUMP, OUTPUT);
   digitalWrite(WATER_PUMP, LOW);
   isStart = false;
@@ -19,6 +19,7 @@ int irrigation(int duration) {
     digitalWrite(WATER_PUMP, HIGH);
   else {
     digitalWrite(WATER_PUMP, LOW);
+    totalIrrigation += (duration * 60 * 1000);
     isStart = false;
     res = 1;
   }

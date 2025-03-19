@@ -21,6 +21,23 @@ router.get('/dataMode', (req,res) =>{
     res.json(data[state]);
 })
 
+router.post("/sendData", (req, res) => {
+    const { id, light, moisture, temp } = req.body;
+
+    if (!id || !light || !moisture || !temp) {
+        return res.status(400).json({ error: "Missing required parameters" });
+    }
+
+    console.log(`Received data - ID: ${id}, Light: ${light}, Moisture: ${moisture}, Temp: ${temp}`);
+
+    // כאן אפשר לשמור את הנתונים בבסיס הנתונים
+
+    res.json({ message: "Data received successfully" });
+});
+
+
+
+
 
 
 module.exports = router;

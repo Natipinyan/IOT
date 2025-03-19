@@ -22,17 +22,37 @@ router.get('/dataMode', (req,res) =>{
 })
 
 router.post("/sendData", (req, res) => {
-    const { id, light, moisture, temp } = req.body;
+    const { id_trees, totalIrrigation } = req.body;
 
-    if (!id || !light || !moisture || !temp) {
+    if (!id_trees || !totalIrrigation) {
         return res.status(400).json({ error: "Missing required parameters" });
     }
 
-    console.log(`Received data - ID: ${id}, Light: ${light}, Moisture: ${moisture}, Temp: ${temp}`);
+    console.log(`Received data - ID: ${id_trees}, totalIrrigation: ${totalIrrigation}`);
 
-    // כאן אפשר לשמור את הנתונים בבסיס הנתונים
+    const checkSql = `SELECT id_plants FROM trees WHERE id_plants = ?`;
 
-    res.json({ message: "Data received successfully" });
+    db_pool.query(checkSql, [id_trees], (err, results) => {
+        if (err) {
+            console.error("Error checking trees table:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+
+        if (results.length === 0) {
+            return res.status(400).json({ error: "id_trees does not exist in trees table" });
+        }
+
+        const sql = `INSERT INTO datasensors (id_trees, totalirrigation, date) VALUES (?, ?, NOW())`;
+
+        db_pool.query(sql, [id_trees, totalIrrigation], (err, result) => {
+            if (err) {
+                console.error("Error inserting data into database:", err);
+                return res.status(500).json({ error: "Database error" });
+            }
+            console.log("Data inserted successfully:", result);
+            res.json({ message: "Data received and stored successfully" });
+        });
+    });
 });
 
 

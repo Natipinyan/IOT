@@ -30,3 +30,24 @@ const tree = require('./routers/treeRout');
 app.use('/tree', tree);
 
 
+
+//processDevices();
+//function processDevices() {
+//    return new Promise((resolve, reject) => {
+//        const sql = `SELECT * FROM plants`;
+//        db_pool.query(sql, (err, results) => {
+//            if (err) {
+//                console.error("Error fetching data from arduino:", err);
+//                reject(err);
+//            } else {
+//                console.log("Fetched arduino data:");
+//                resolve(results);
+//                console.log(results);
+//            }
+//        });
+//    });
+//}
+
+
+
+
